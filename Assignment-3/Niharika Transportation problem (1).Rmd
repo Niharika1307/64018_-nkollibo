@@ -1,0 +1,254 @@
+---
+title: "Transportation"
+author: "Niharika kollibayana"
+date: "`r Sys.Date()`"
+output: html_document
+---
+Objective Function
+
+$$\text{Miminize} \hspace{.2cm} TC = 420 x_{11} + 414 x_{A12} + 425 x_{13} + 312 x_{21} + 315 x_{22} + 314 x_{23} + 510 x_{31} + 512 x_{32} + 515 x_{33} $$
+These are subject to following constraints
+Supply constraints:
+ $$  x_{11} + x_{12} + x_{13}  \le 100 $$ 
+
+$$  x_{21} + x_{22} + x_{23} \le 125 $$
+$$  x_{31} + x_{32} + x_{33} \le 150 $$
+#Demand Constraints
+
+$$  x_{11} + x_{21} + x_{31} \ge 80 $$ 
+$$  x_{12} + x_{22} + x_{32} \ge 90 $$ 
+$$  x_{13} + x_{23} + x_{33} \ge 70 $$ 
+
+Now allare subjected to non-negativity where xij>=0 where i=1,2 and j= 1,2,3
+
+#loading packages
+```{r}
+library(Matrix)
+library("lpSolve")
+```
+
+```{r}
+display <- matrix(c(20,14,25,400,100,
+                  12,15,14,300,125,
+                  10,12,15,500,150,
+                  80,90,70,"-","240/375"),ncol=5,nrow=4,byrow=TRUE)
+ colnames(display) <- c("Warehouse1","Warehouse2","Warehouse3","Production Cost","Production Capacity")
+ rownames(display) <- c("PlantA","PlantB","PlantC","Monthly Demand")
+ display <- as.table(display)
+ display
+ 
+```
+
+```{r}
+  display1 <- matrix(c(420,414,425,0,100,
+                  312,315,314,0,125,
+                  510,512,515,0,150,
+                  80,60,70,135,375),ncol=5,nrow=4,byrow=TRUE)
+ colnames(display1) <- c("Warehouse1","Warehouse2","Warehouse3","Dummy","Production Capacity")
+ rownames(display1) <- c("PlantA","PlantB","PlantC","Monthly Demand")
+ display1 <- as.table(display1)
+ display1
+```
+
+#Cost Matrix
+```{r}
+totalcosts <- matrix(c(420,414,425,0,
+                   312,315,314,0,
+                   510,512,515,0),nrow=3, byrow = TRUE)
+```
+
+#Production capacity in the matrix's row
+```{r}
+row.rhs <- c(100,125,150)
+ row.signs <- rep("<=", 3)
+```
+
+#using the 135 to determine the monthly demand.
+```{r}
+col.rhs <- c(80,90,70,135)
+ col.signs <- rep(">=", 4)
+```
+
+#LP Transport command
+```{r}
+lp.transport(totalcosts,"min",row.signs,row.rhs,col.signs,col.rhs)
+```
+
+# solution matrix
+```{r}
+lp.transport(totalcosts, "min", row.signs, row.rhs, col.signs, col.rhs)$solution
+```
+
+We can conclude from this that Z = $88250. The results are as follows for each of the variables:
+$$ 10x_{11} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 10 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse 1 \hspace{.2cm} from \hspace{.2cm} plant A $$
+$$ 90x_{12} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 90 \hspace{.2cm} units \hspace{.2cm} the Warehouse \hspace{.2cm} 2 \hspace{.2cm} from \hspace{.2cm} plant A.$$
+$$ 55x_{21} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 55 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 1 \hspace{.2cm} from \hspace{.2cm} plant \hspace{.2cm} B.$$
+$$ 70x_{23} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 70 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 3  \hspace{.2cm}from\hspace{.2cm} plant\hspace{.2cm} B.$$
+$$ 15x_{31}\hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 15 \hspace{.2cm} units  \hspace{.2cm}the \hspace{.2cm} Warehouse \hspace{.2cm} 1\hspace{.2cm} from \hspace{.2cm}plant \hspace{.2cm} C.$$ 
+
+
+Question 2) We are aware that the number of constants in dual and the number of variables in primal are the same. The primary of the LP is asked in the first question. We shall maximize in the dual because we choose to minimize in the primal. Let's utilize "m" and "n" as our variables for the dual problem.
+```{r}
+display2 <- matrix(c(420,414,425,100,"m_1",
+                  312,315,314,125,"m_2",
+                  510,512,515,150,"m_3",
+                  80,60,70,375,"-",
+                  "n_1","n_2","n_3","-","-"),ncol=5,nrow=5,byrow=TRUE)
+ colnames(display2) <- c("W1","W2","W3","Prod Cap","Supply (Dual)")
+ rownames(display2) <- c("PlantA","PlantB","PlantC","Monthly Demand","Demand (Dual)")
+ display2 <- as.table(display2)
+ display2
+ 
+```
+
+Objective Function.
+
+$$ \text{Max} \hspace{.2cm} Z = 100 m_{1} + 125 m_{2} + 150 m_{3} +80 n_{1} + 90 n_{2} + 70 n_{3}$$
+
+This objective function is subject to following constraints:
+$$  m_{1} + n_{1}  \le 420 $$ 
+$$  m_{1} + n_{2}  \le 414 $$ 
+$$  m_{1} + n_{3}  \le 425 $$ 
+$$  m_{2} + n_{1}  \le 312 $$ 
+$$  m_{2} + n_{2}  \le 315 $$ 
+$$  m_{2} + n_{3}  \le 314 $$ 
+$$  m_{3} + n_{1}  \le 510 $$ 
+$$  m_{3} + n_{2}  \le 512 $$ 
+$$  m_{3} + n_{3}  \le 515 $$ 
+
+These variables were taken from the transposed primal matrix of the linear programming function. It is simple to verify by transposing the f.con into the matrix and comparing it to the primal's above constants. These are confined where m=1,2,3 & n=1,2,3 and mk, nl
+
+#Constants of the primal are now the objective function variables.
+```{r}
+ f.obj <- c(100,125,150,80,90,70)
+ #transposed from the constraints matrix in the primal
+ f.con <- matrix(c(1,0,0,1,0,0,
+                   1,0,0,0,1,0,
+                   1,0,0,0,0,1,
+                   0,1,0,1,0,0,
+                   0,1,0,0,1,0,
+                   0,1,0,0,0,1,
+                   0,0,1,1,0,0,
+                   0,0,1,0,1,0,
+                   0,0,1,0,0,1),nrow=9, byrow = TRUE)
+ #these change As we are MAX the dual not min
+ f.dir <- c("<=",
+ "<=",
+ "<=",
+ "<=",
+ "<=",
+ "<=",
+ "<=",
+"<=", "<=")
+ f.rhs <- c(420,414,424,312,315,314,510,512,515)
+ lp ("max", f.obj, f.con, f.dir, f.rhs)
+```
+
+```{r}
+lp ("max", f.obj, f.con, f.dir, f.rhs)$solution
+```
+
+
+So Z=157040 dollars and variables are: m1 = 414 which represents plant A
+m2 = 312 which represents Plant B
+m3 = 510 which represents Plant C
+n3 = 2 which represents Warehouse 3
+
+OBSERVATION
+
+The minimal Z=88250 (Primal) and the maximum Z=157040(Dual). 
+What are we trying to max/min in this problem. We found that we should not be shipping from Plant(A/B/C) to all three Warehouses. We should be shipping from:
+
+$$ 10x_{11} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 10 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse 1 \hspace{.2cm} from \hspace{.2cm} plant A $$
+$$ 90x_{12} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 90 \hspace{.2cm} units \hspace{.2cm} the Warehouse \hspace{.2cm} 2 \hspace{.2cm} from \hspace{.2cm} plant A.$$
+$$ 55x_{21} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 55 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 1 \hspace{.2cm} from \hspace{.2cm} plant \hspace{.2cm} B.$$
+$$ 70x_{23} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 70 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 3  \hspace{.2cm}from\hspace{.2cm} plant\hspace{.2cm} B.$$
+$$ 15x_{31}\hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 15 \hspace{.2cm} units  \hspace{.2cm}the \hspace{.2cm} Warehouse \hspace{.2cm} 1\hspace{.2cm} from \hspace{.2cm}plant \hspace{.2cm} C.$$ 
+
+
+Now we want to Max the profits from each distribution in respect to capacity.
+
+Question 3) 
+
+m1 - n1 <= 422
+
+then we subtract n1 to the other side to get m1 <= 422 - n1
+
+To compute that value it would be $414<=(-0+422) which is true. We would continue to evaluate these equations:
+
+$$ m1 <=422-n1===414<=422-0=422 = TRUE $$
+$$m1 <= 414-n2===414<=414-0=414 = TRUE $$
+$$ m1 <= 425-n3===414<=425-2=423 = TRUE $$
+$$ m2 <= 312-n1===312<=312-0=312 = TRUE $$
+$$ m2 <= 315−n2===312<=315-0=315 = TRUE $$
+$$ m2 <= 314-n3===312<=314-2=312 = TRUE $$
+$$ m3 <= 510-n1===510<=510-0=510 = TRUE $$
+$$ m3 <= 512−n2===510<=512-0=512 = TRUE $$
+$$ m3 <= 515-n3===510<=515-2=513 = TRUE $$
+
+#By updating each column, we can test for the shadow price while also learning from the Duality-and-Sensitivity. We change the 100 to 101 and 125 to 126 and 150 to 151 in our LP Transport. 
+```{r}
+row.rhs1 <- c(101,125,150)
+ row.signs1 <- rep("<=", 3)
+ col.rhs1 <- c(80,60,70,10)
+ col.signs1 <- rep(">=", 4)
+ row.rhs2 <- c(100,126,150)
+ row.signs2 <- rep("<=", 3)
+ col.rhs2 <- c(80,90,70,10)
+ col.signs2 <- rep(">=", 4)
+ row.rhs3 <- c(100,125,151)
+ row.signs3 <- rep("<=", 3)
+ col.rhs3 <- c(80,90,70,10)
+ col.signs3 <- rep(">=", 4)
+ lp.transport(totalcosts,"min",row.signs,row.rhs,col.signs,col.rhs)
+```
+
+
+```{r}
+ lp.transport(totalcosts,"min",row.signs1,row.rhs1,col.signs1,col.rhs1)
+```
+
+
+```{r}
+lp.transport(totalcosts,"min",row.signs2,row.rhs2,col.signs2,col.rhs2)
+```
+```{r}
+lp.transport(totalcosts,"min",row.signs3,row.rhs3,col.signs3,col.rhs3)
+```
+  
+Since we are taking the minimum of this particular function,  which was determined by adding 1 to each of the Plants and the primordial, is 13770 for Plant A. Plant B, have a shadow price of 198.Plant B, on the other hand doesn't have a shadow price. 
+
+```{r}
+lp ("max", f.obj, f.con, f.dir, f.rhs)$solution
+```
+
+n_2 was = 0.
+
+CONCLUSION:
+from the primal:
+$$10x_{11} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 10 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 1 \hspace{.2cm} from \hspace{.2cm} plant\hspace{.2cm} A$$
+$$ 90x_{12} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 90 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 2 \hspace{.2cm} from \hspace{.2cm}plant \hspace{.2cm} A. $$
+$$ 55x_{21} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 55 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 1 \hspace{.2cm} from \hspace{.2cm} plant \hspace{.2cm} B.$$
+$$ 70x_{23} \hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 70 \hspace{.2cm} units \hspace{.2cm} the \hspace{.2cm} Warehouse \hspace{.2cm} 3  \hspace{.2cm}from\hspace{.2cm} plant\hspace{.2cm} B.$$
+$$ 15x_{31}\hspace{.2cm} which \hspace{.2cm} is \hspace{.2cm} 15 \hspace{.2cm} units  \hspace{.2cm}the \hspace{.2cm} Warehouse \hspace{.2cm} 1\hspace{.2cm} from \hspace{.2cm}plant \hspace{.2cm} C.$$ 
+From the dual
+We want the MR=MC. SIX of the six MR<=MC. 
+
+For profit maximization to occur,'marginal revenue' (MR) must equal'marginal costs' (MC), therefore MR1 = MC1.
+
+Based on the preceding equations, we may deduce that profit maximization occurs for our situation if the marginal cost equals the marginal income.
+
+If MR MC, then we must reduce costs at the origin plants to satisfy MR.
+
+If MR > MC, we must raise production supply to match the demand for MR. 
+
+
+
+
+
+
+
+
+
+
+
